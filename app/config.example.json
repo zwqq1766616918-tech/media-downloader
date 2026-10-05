@@ -1,0 +1,27 @@
+{
+  "_说明": "这是配置模板。请勿直接改名使用——运行「配置向导」会自动生成 config.json。本文件不含任何个人信息。",
+  "port": 8790,
+  "output_dir": "下载",
+  "open_browser": true,
+  "chrome_path": "",
+  "runtime": {
+    "python": "",
+    "bundled": true
+  },
+  "engines": {
+    "gallery_dl": "",
+    "yt_dlp": "",
+    "uv": "",
+    "xhs_python": "",
+    "tiktok_dl": "",
+    "tiktok_python": ""
+  },
+  "platforms": {
+    "twitter": { "cookie": "", "config": "", "workdir": "" },
+    "instagram": { "cookie": "", "config": "", "workdir": "" },
+    "weibo": { "cookie": "", "config": "", "workdir": "" },
+    "tiktok": { "cookie": "", "workdir": "" },
+    "douyin": { "workdir": "" },
+    "xhs": { "cookie": "", "workdir": "", "mcp": "" }
+  }
+}

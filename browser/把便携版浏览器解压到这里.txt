@@ -1,0 +1,20 @@
+这个文件夹是给「便携版浏览器」用的。
+
+如果你不想（或不能）安装官方 Chrome，可以下载免安装的便携版：
+
+  1. 打开  https://registry.npmmirror.com/binary.html?path=chrome-for-testing/
+     （阿里托管的镜像，国内直连，不需要外网）
+  2. 进入 win64 目录，下载 chrome-win64.zip
+  3. 解压，会得到一个 chrome-win64 文件夹，里面是 chrome.exe
+  4. 把整个 chrome-win64 文件夹放到本文件夹下，也就是：
+
+        media-downloader\browser\chrome-win64\chrome.exe
+
+  5. 双击 media-downloader\app\安装浏览器.bat 验证一下，能认出来就成了
+
+为什么需要它：
+  抖音的下载引擎需要一个真实浏览器来生成请求签名、保存扫码登录态。
+  为了不让技能包多背 400 多 MB 的浏览器内核，我们改成用你电脑上的浏览器。
+
+如果电脑上已经装了 Chrome 或 Edge（Win10/11 一般自带 Edge），
+就完全不用管这个文件夹，程序会自动找到并用起来。

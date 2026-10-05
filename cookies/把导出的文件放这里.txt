@@ -1,0 +1,9 @@
+把用 Chrome 扩展导出的 cookies.txt 放进对应子文件夹，文件名必须是 cookies.txt
+
+  twitter\cookies.txt     ← 在 https://x.com 登录后导出
+  instagram\cookies.txt   ← 在 https://www.instagram.com 登录后导出
+  weibo\cookies.txt       ← 在 https://weibo.com 登录后导出
+  tiktok\cookies.txt      ← 在 https://www.tiktok.com 登录后导出
+
+小红书和抖音不用这个，它们走扫码登录。
+详细步骤见 assets\cookie导出工具\使用说明.md

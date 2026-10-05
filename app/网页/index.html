@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多平台资源下载工作台</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#fff; --line:#e3e5ea; --text:#1b1d21; --muted:#6b7280;
+    --brand:#2f6bff; --brand-dark:#1f52d6; --ok:#16a34a; --warn:#d97706; --err:#dc2626;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;font-size:16px;line-height:1.6}
+  .wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px}
+  h1{font-size:24px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+  .card h2{font-size:17px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+  .steps{color:var(--muted);font-size:13px;font-weight:400}
+
+  /* 状态灯 */
+  .lights{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+  .light{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--line);
+         border-radius:10px;font-size:14px;background:#fafbfc}
+  .dot{width:11px;height:11px;border-radius:50%;flex:none;background:#cbd0d8}
+  .dot.on{background:var(--ok);box-shadow:0 0 0 3px rgba(22,163,74,.15)}
+  .dot.off{background:var(--err);box-shadow:0 0 0 3px rgba(220,38,38,.13)}
+  .dot.warn{background:var(--warn);box-shadow:0 0 0 3px rgba(217,119,6,.15)}
+  .light b{font-weight:600}
+  .light small{color:var(--muted);display:block;font-size:12px;line-height:1.35}
+
+  /* 输入 */
+  textarea{width:100%;min-height:96px;padding:14px;font-size:17px;font-family:inherit;
+           border:2px solid var(--line);border-radius:12px;resize:vertical;outline:none}
+  textarea:focus{border-color:var(--brand)}
+  .detect{margin-top:8px;font-size:14px;color:var(--muted);min-height:22px}
+  .detect b{color:var(--brand)}
+
+  /* 模式按钮 */
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0 8px}
+  .mode{padding:16px;border:2px solid var(--line);border-radius:12px;background:#fafbfc;
+        cursor:pointer;text-align:center;transition:.12s}
+  .mode:hover{border-color:#c3cbd8}
+  .mode.sel{border-color:var(--brand);background:#eef3ff}
+  .mode b{display:block;font-size:17px;margin-bottom:2px}
+  .mode small{color:var(--muted);font-size:13px}
+
+  .row{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+  .row label{font-size:14px;color:var(--muted);min-width:74px}
+  input[type=text],input[type=number]{flex:1;min-width:180px;padding:11px 12px;font-size:15px;
+        font-family:inherit;border:2px solid var(--line);border-radius:10px;outline:none}
+  input:focus{border-color:var(--brand)}
+
+  button{font-family:inherit;font-size:15px;border-radius:10px;border:2px solid var(--line);
+         background:#fff;padding:11px 18px;cursor:pointer;transition:.12s}
+  button:hover{border-color:#c3cbd8}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff;font-size:19px;
+                 font-weight:600;padding:16px 26px;width:100%;margin-top:18px}
+  button.primary:hover{background:var(--brand-dark);border-color:var(--brand-dark)}
+  button.primary:disabled{background:#c8cfda;border-color:#c8cfda;cursor:not-allowed}
+  button.tiny{padding:7px 12px;font-size:13px}
+
+  /* 任务 */
+  .task{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;background:#fafbfc}
+  .task .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .tag{font-size:12px;padding:3px 9px;border-radius:999px;background:#e8ecf3;color:#41506b}
+  .tag.done{background:#e6f6ec;color:#15803d}
+  .tag.failed{background:#fdeaea;color:#b91c1c}
+  .tag.running{background:#e7efff;color:#1f52d6}
+  .task .url{font-size:13px;color:var(--muted);word-break:break-all;margin:6px 0}
+  .bar{height:9px;border-radius:999px;background:#e6e9ef;overflow:hidden;margin:8px 0 6px}
+  .bar > i{display:block;height:100%;width:0;background:var(--brand);transition:width .4s}
+  .bar.run > i{width:35%;animation:slide 1.4s ease-in-out infinite}
+  @keyframes slide{0%{margin-left:-35%}100%{margin-left:100%}}
+  .meta{font-size:13px;color:var(--muted)}
+  .err{color:var(--err);font-size:14px;margin-top:6px;font-weight:600}
+  details{margin-top:8px}
+  summary{cursor:pointer;font-size:13px;color:var(--muted)}
+  pre{background:#1e2430;color:#d5dbe6;padding:12px;border-radius:8px;font-size:12px;
+      max-height:240px;overflow:auto;white-space:pre-wrap;word-break:break-all;margin:8px 0 0}
+  .empty{color:var(--muted);font-size:14px;text-align:center;padding:20px 0}
+  .hint{font-size:13px;color:var(--muted);background:#f0f2f6;border-radius:10px;padding:12px 14px}
+  .hint code{background:#e2e6ee;padding:1px 6px;border-radius:5px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>多平台资源下载工作台</h1>
+  <div class="sub">支持 小红书 · 抖音 · 推特 X · Instagram · TikTok · 微博</div>
+
+  <div class="card">
+    <h2>环境检查 <span class="steps">红灯表示还没配好，把鼠标放上去看原因</span></h2>
+    <div class="lights" id="lights"></div>
+  </div>
+
+  <div class="card">
+    <h2>① 粘贴链接</h2>
+    <textarea id="url" placeholder="把博主主页链接，或单条作品的链接，粘贴到这里&#10;可以一次粘贴多条，每行一条"></textarea>
+    <div class="detect" id="detect"></div>
+
+    <h2 style="margin-top:22px">② 选择下载方式</h2>
+    <div class="modes">
+      <div class="mode sel" data-mode="author">
+        <b>下载整个主页</b>
+        <small>这个号里的全部作品</small>
+      </div>
+      <div class="mode" data-mode="single">
+        <b>只下载这一条</b>
+        <small>链接指向的那一个作品</small>
+      </div>
+    </div>
+
+    <h2 style="margin-top:22px">③ 保存到哪里</h2>
+    <div class="row">
+      <input type="text" id="dest" readonly>
+      <button class="tiny" id="pick">选择文件夹</button>
+      <button class="tiny" id="open">打开文件夹</button>
+    </div>
+    <div class="row">
+      <label>数量上限</label>
+      <input type="number" id="limit" min="0" placeholder="0 或留空 = 不限制">
+      <span class="meta">想先试一下，可以填 20</span>
+    </div>
+
+    <button class="primary" id="go">开始下载</button>
+    <div class="detect" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>下载记录 <span class="steps">每 2 秒自动刷新</span></h2>
+    <div id="tasks"><div class="empty">还没有下载任务</div></div>
+  </div>
+
+  <div class="card">
+    <h2>用不明白？</h2>
+    <div class="hint">
+      · 想下载某个博主的全部作品 → 复制他的<b>主页链接</b>，选「下载整个主页」<br>
+      · 只想下载一条 → 复制那条作品的<b>分享链接</b>，选「只下载这一条」<br>
+      · 抖音<b>主页和单条都支持</b>，但需要电脑上有 Chrome 或 Edge（没装就双击 <code>安装浏览器.bat</code>）<br>
+      · 小红书需要先启动 MCP 服务并扫码登录；<b>红灯</b>时请先按文档完成登录<br>
+      · 下载很慢或失败，多半是 Cookie 过期了 → 重新导出一份 <code>cookies.txt</code><br>
+      · 关掉这个网页不影响下载，但关掉后台的黑色窗口会停止服务
+    </div>
+  </div>
+
+</div>
+
+<script>
+let MODE = "author";
+
+async function api(path, body){
+  const opt = body ? {method:"POST", headers:{"Content-Type":"application/json"},
+                      body:JSON.stringify(body)} : {};
+  const r = await fetch(path, opt);
+  return r.json();
+}
+
+/* 模式切换 */
+document.querySelectorAll(".mode").forEach(el=>{
+  el.onclick = () => {
+    document.querySelectorAll(".mode").forEach(x=>x.classList.remove("sel"));
+    el.classList.add("sel");
+    MODE = el.dataset.mode;
+    document.getElementById("limit").disabled = (MODE === "single");
+  };
+});
+document.getElementById("limit").placeholder = "0 或留空 = 不限制";
+
+/* 链接识别 */
+const HOSTS = {
+  "小红书":["xiaohongshu.com","xhslink.com"],
+  "抖音":["douyin.com","iesdouyin.com"],
+  "推特 X":["x.com","twitter.com","t.co"],
+  "Instagram":["instagram.com","instagr.am"],
+  "TikTok":["tiktok.com"],
+  "微博":["weibo.com","weibo.cn"]
+};
+function detect(url){
+  try{
+    const host = new URL(url.includes("://")?url:"https://"+url).hostname.toLowerCase();
+    for(const [name,list] of Object.entries(HOSTS))
+      if(list.some(h=>host===h||host.endsWith("."+h))) return name;
+  }catch(e){}
+  return "";
+}
+document.getElementById("url").addEventListener("input", e=>{
+  const urls = (e.target.value.match(/https?:\/\/[^\s，。、；）】」》"'<>]+/gi)||[]);
+  const box = document.getElementById("detect");
+  if(!urls.length){ box.textContent=""; return; }
+  const names = urls.map(u=>detect(u)||"未识别");
+  box.innerHTML = "识别到 <b>"+urls.length+"</b> 个链接：<b>"+names.join("、")+"</b>";
+});
+
+/* 保存目录 */
+async function refreshDest(){
+  const s = await api("/api/state");
+  if(!document.getElementById("dest").value) document.getElementById("dest").value = s.output_dir;
+}
+document.getElementById("pick").onclick = async ()=>{
+  const r = await api("/api/pickdir", {});
+  if(r.dir) document.getElementById("dest").value = r.dir;
+  else if(!r.dir) alert("没有选择文件夹（或系统不支持弹窗），可以手动把路径粘到输入框里");
+};
+document.getElementById("open").onclick = async ()=>{
+  const r = await api("/api/opendir", {dir:document.getElementById("dest").value});
+  if(!r.ok) alert(r.error||"打开失败");
+};
+
+/* 开始下载 */
+document.getElementById("go").onclick = async ()=>{
+  const url = document.getElementById("url").value.trim();
+  const msg = document.getElementById("msg");
+  if(!url){ msg.textContent = "请先粘贴链接"; return; }
+  msg.textContent = "正在提交…";
+  const r = await api("/api/task", {
+    url:url, mode:MODE,
+    dest:document.getElementById("dest").value,
+    limit:parseInt(document.getElementById("limit").value||"0",10)||0
+  });
+  if(!r.ok){ msg.textContent = r.error || "提交失败"; return; }
+  const bad = (r.created||[]).filter(x=>x.error);
+  msg.textContent = bad.length
+    ? "有 " + bad.length + " 个链接没提交成功：" + bad.map(x=>x.error).join("；")
+    : "已加入下载队列，看下面的「下载记录」";
+  document.getElementById("url").value = "";
+  document.getElementById("detect").textContent = "";
+  load();
+};
+
+/* 状态灯 */
+function lightHTML(p){
+  const cls = p.ready ? "on" : "off";
+  const note = (p.notes&&p.notes.length) ? p.notes.join("、") : "已就绪";
+  return `<div class="light" title="${note}">
+      <span class="dot ${cls}"></span>
+      <span><b>${p.name}</b><small>${note}</small></span></div>`;
+}
+async function load(){
+  const s = await api("/api/state");
+  const lights = document.getElementById("lights");
+  const bName = (s.browser||"").split(/[\\/]/).pop();
+  lights.innerHTML =
+    `<div class="light" title="${s.chrome_ok?('已检测到：'+s.browser):'没检测到浏览器。抖音需要 Chrome 或 Edge，双击 app 目录下的「安装浏览器.bat」按引导安装'}">
+       <span class="dot ${s.chrome_ok?'on':'warn'}"></span>
+       <span><b>浏览器</b><small>${s.chrome_ok?(bName||'已安装'):'未检测到，抖音需要它'}</small></span></div>`
+    + (s.platforms||[]).map(lightHTML).join("");
+
+  if(!document.getElementById("dest").value) document.getElementById("dest").value = s.output_dir;
+
+  const box = document.getElementById("tasks");
+  const list = (s.tasks||[]).slice().reverse();
+  if(!list.length){ box.innerHTML = '<div class="empty">还没有下载任务</div>'; return; }
+  box.innerHTML = list.map(t=>{
+    const st = {queued:["排队中",""], running:["下载中","running"], done:["已完成","done"],
+                failed:["失败","failed"], canceled:["已取消",""]}[t.status] || [t.status,""];
+    const running = t.status === "running" || t.status === "queued";
+    const meta = t.status === "done"
+      ? `保存到：${t.author_dir||t.dest}　图片 ${t.img_count}　视频 ${t.vid_count}`
+      : (t.mode==="single" ? "单条内容" : "整个主页") + "　→　" + t.dest;
+    return `<div class="task">
+      <div class="top">
+        <span><span class="tag">${t.platform}</span> <b>${t.author||"　"}</b></span>
+        <span class="tag ${st[1]}">${t.stage||st[0]}</span>
+      </div>
+      <div class="url">${t.url}</div>
+      <div class="bar ${running?'run':''}"><i style="${running?'':'width:'+(t.status==='done'?'100%':'0')}"></i></div>
+      <div class="meta">${meta}　·　${t.created}</div>
+      ${t.error?`<div class="err">${t.error}</div>`:""}
+      ${t.log&&t.log.length?`<details><summary>查看详细过程</summary><pre>${t.log.join("\n")}</pre></details>`:""}
+      ${t.status==="queued"?`<div class="row"><button class="tiny" onclick="cancelTask('${t.id}')">取消</button></div>`:""}
+    </div>`;
+  }).join("");
+}
+async function cancelTask(id){ await api("/api/cancel",{id:id}); load(); }
+
+refreshDest();
+load();
+setInterval(load, 2000);
+</script>
+</body>
+</html>
